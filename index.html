@@ -164,10 +164,10 @@ function pintarBalls(container, numeros, claseExtra=''){
 
 async function init(){
   try{
-    const stats = await cargarJSON('../data/estadisticas.json');
+    const stats = await cargarJSON('./data/estadisticas.json');
     let combos = null, desempeno = null;
-    try { combos = await cargarJSON('../data/combinaciones_generadas.json'); } catch(e) {}
-    try { desempeno = await cargarJSON('../data/desempeno_estrategias.json'); } catch(e) {}
+    try { combos = await cargarJSON('./data/combinaciones_generadas.json'); } catch(e) {}
+    try { desempeno = await cargarJSON('./data/desempeno_estrategias.json'); } catch(e) {}
 
     document.getElementById('estado-carga').style.display = 'none';
     document.getElementById('contenido').style.display = 'block';
