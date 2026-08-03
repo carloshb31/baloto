@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Baloto Stats · Análisis y generador de combinaciones</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root{
     --bg: #0b1020;
@@ -187,80 +187,107 @@ async function init(){
     pintarBalls(document.getElementById('calientes'), stats.numeros_calientes, 'hot');
     pintarBalls(document.getElementById('frios'), stats.numeros_frios, 'cold');
 
+    const chartJsOk = typeof Chart !== 'undefined';
+
     // Gráfico de frecuencia
-    const freq = stats.frecuencias.principales;
-    new Chart(document.getElementById('chartFrecuencia'), {
-      type: 'bar',
-      data: {
-        labels: Object.keys(freq),
-        datasets: [{ label: 'Veces que ha salido', data: Object.values(freq), backgroundColor: CHART_COLORS.gold }]
-      },
-      options: {
-        plugins:{ legend:{ display:false } },
-        scales:{
-          x:{ ticks:{ color: CHART_COLORS.muted, maxRotation:90, minRotation:90 }, grid:{ display:false } },
-          y:{ ticks:{ color: CHART_COLORS.muted }, grid:{ color:'rgba(255,255,255,.06)' } }
-        }
-      }
-    });
-
-    // Gráfico pares/impares
-    const pi = stats.pares_impares;
-    new Chart(document.getElementById('chartParesImpares'), {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(pi),
-        datasets: [{ data: Object.values(pi), backgroundColor: [CHART_COLORS.gold, CHART_COLORS.red, CHART_COLORS.green, CHART_COLORS.blue, CHART_COLORS.purple, '#888'] }]
-      },
-      options: { plugins:{ legend:{ position:'bottom', labels:{ color: CHART_COLORS.ink } } } }
-    });
-
-    // Combinaciones generadas
-    const listaCombos = document.getElementById('combinaciones');
-    if(combos && combos.combinaciones){
-      combos.combinaciones.forEach(c=>{
-        const div = document.createElement('div');
-        div.className = 'combo';
-        const tag = document.createElement('span');
-        tag.className = 'tag ' + c.estrategia;
-        tag.textContent = c.estrategia;
-        div.appendChild(tag);
-        const balls = document.createElement('div');
-        balls.className = 'balls';
-        pintarBalls(balls, c.numeros);
-        const sb = document.createElement('div');
-        sb.className = 'ball sb';
-        sb.textContent = String(c.superbalota).padStart(2,'0');
-        balls.appendChild(sb);
-        div.appendChild(balls);
-        listaCombos.appendChild(div);
-      });
-    } else {
-      listaCombos.textContent = 'Aún no se han generado combinaciones.';
-    }
-
-    // Desempeño por estrategia
-    if(desempeno && desempeno.desempeno_por_estrategia){
-      const d = desempeno.desempeno_por_estrategia;
-      const labels = Object.keys(d);
-      const valores = labels.map(k => d[k].promedio_aciertos_numeros || 0);
-      new Chart(document.getElementById('chartDesempeno'), {
+    try{
+      if(!chartJsOk) throw new Error('Chart.js no cargó');
+      const freq = stats.frecuencias.principales;
+      new Chart(document.getElementById('chartFrecuencia'), {
         type: 'bar',
-        data: { labels, datasets: [{ label:'Promedio de aciertos (de 5)', data: valores, backgroundColor: CHART_COLORS.green }] },
+        data: {
+          labels: Object.keys(freq),
+          datasets: [{ label: 'Veces que ha salido', data: Object.values(freq), backgroundColor: CHART_COLORS.gold }]
+        },
         options: {
           plugins:{ legend:{ display:false } },
           scales:{
-            x:{ ticks:{ color: CHART_COLORS.muted }, grid:{ display:false } },
-            y:{ ticks:{ color: CHART_COLORS.muted }, grid:{ color:'rgba(255,255,255,.06)' }, suggestedMax:5 }
+            x:{ ticks:{ color: CHART_COLORS.muted, maxRotation:90, minRotation:90 }, grid:{ display:false } },
+            y:{ ticks:{ color: CHART_COLORS.muted }, grid:{ color:'rgba(255,255,255,.06)' } }
           }
         }
       });
-      document.getElementById('desempeno-nota').textContent = 'Actualizado: ' + (desempeno.actualizado || '');
-    } else {
-      document.getElementById('desempeno-nota').textContent = 'Aún no hay suficiente historial para evaluar estrategias.';
+    }catch(e){
+      console.error('Error en gráfico de frecuencia:', e);
+      document.getElementById('chartFrecuencia').replaceWith(Object.assign(document.createElement('p'), {className:'updated', textContent:'No se pudo cargar el gráfico.'}));
+    }
+
+    // Gráfico pares/impares
+    try{
+      if(!chartJsOk) throw new Error('Chart.js no cargó');
+      const pi = stats.pares_impares;
+      new Chart(document.getElementById('chartParesImpares'), {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(pi),
+          datasets: [{ data: Object.values(pi), backgroundColor: [CHART_COLORS.gold, CHART_COLORS.red, CHART_COLORS.green, CHART_COLORS.blue, CHART_COLORS.purple, '#888'] }]
+        },
+        options: { plugins:{ legend:{ position:'bottom', labels:{ color: CHART_COLORS.ink } } } }
+      });
+    }catch(e){
+      console.error('Error en gráfico de pares/impares:', e);
+      document.getElementById('chartParesImpares').replaceWith(Object.assign(document.createElement('p'), {className:'updated', textContent:'No se pudo cargar el gráfico.'}));
+    }
+
+    // Combinaciones generadas
+    try{
+      const listaCombos = document.getElementById('combinaciones');
+      if(combos && combos.combinaciones && combos.combinaciones.length){
+        combos.combinaciones.forEach(c=>{
+          const div = document.createElement('div');
+          div.className = 'combo';
+          const tag = document.createElement('span');
+          tag.className = 'tag ' + c.estrategia;
+          tag.textContent = c.estrategia;
+          div.appendChild(tag);
+          const balls = document.createElement('div');
+          balls.className = 'balls';
+          pintarBalls(balls, c.numeros);
+          const sb = document.createElement('div');
+          sb.className = 'ball sb';
+          sb.textContent = String(c.superbalota).padStart(2,'0');
+          balls.appendChild(sb);
+          div.appendChild(balls);
+          listaCombos.appendChild(div);
+        });
+      } else {
+        listaCombos.textContent = 'Aún no se han generado combinaciones. Corre scripts/generator.py o el workflow de Actions.';
+      }
+    }catch(e){
+      console.error('Error mostrando combinaciones:', e);
+    }
+
+    // Desempeño por estrategia
+    try{
+      if(desempeno && desempeno.desempeno_por_estrategia && Object.keys(desempeno.desempeno_por_estrategia).length){
+        if(!chartJsOk) throw new Error('Chart.js no cargó');
+        const d = desempeno.desempeno_por_estrategia;
+        const labels = Object.keys(d);
+        const valores = labels.map(k => d[k].promedio_aciertos_numeros || 0);
+        new Chart(document.getElementById('chartDesempeno'), {
+          type: 'bar',
+          data: { labels, datasets: [{ label:'Promedio de aciertos (de 5)', data: valores, backgroundColor: CHART_COLORS.green }] },
+          options: {
+            plugins:{ legend:{ display:false } },
+            scales:{
+              x:{ ticks:{ color: CHART_COLORS.muted }, grid:{ display:false } },
+              y:{ ticks:{ color: CHART_COLORS.muted }, grid:{ color:'rgba(255,255,255,.06)' }, suggestedMax:5 }
+            }
+          }
+        });
+        document.getElementById('desempeno-nota').textContent = 'Actualizado: ' + (desempeno.actualizado || '');
+      } else {
+        document.getElementById('chartDesempeno').style.display = 'none';
+        document.getElementById('desempeno-nota').textContent = 'Aún no hay suficiente historial para evaluar estrategias (se necesitan sorteos posteriores a una generación de combinaciones).';
+      }
+    }catch(e){
+      console.error('Error en gráfico de desempeño:', e);
+      document.getElementById('desempeno-nota').textContent = 'No se pudo cargar el gráfico de desempeño.';
     }
 
   }catch(err){
+    console.error(err);
+    document.getElementById('estado-carga').style.display = 'block';
     document.getElementById('estado-carga').textContent = 'Error cargando datos: ' + err.message;
   }
 }
