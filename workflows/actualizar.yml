@@ -1,0 +1,47 @@
+name: Actualizar resultados Baloto Stats
+
+on:
+  schedule:
+    # Baloto sortea lunes, miércoles y sábado ~11:00pm COT (UTC-5).
+    # Corremos temprano el día siguiente: martes, jueves, domingo a las 10:30 AM UTC (5:30 AM Colombia)
+    - cron: '30 10 * * 2,4,0'
+  workflow_dispatch: # permite correrlo manualmente desde GitHub
+
+concurrency:
+  group: actualizar-baloto
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run scraper
+        run: python scraper.py
+
+      - name: Commit y push si hay cambios
+        run: |
+          git config user.name "Baloto Stats Bot"
+          git config user.email "bot@baloto-stats.com"
+          git add data.json
+          if git diff --staged --quiet; then
+            echo "No hay cambios para commitear"
+          else
+            git commit -m "🎱 Actualizar resultados Baloto $(date +'%Y-%m-%d')"
+            git fetch origin main
+            git merge origin/main --no-edit -X ours
+            git push
+          fi
