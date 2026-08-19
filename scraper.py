@@ -11,10 +11,17 @@ en data.json con la MISMA estructura que usa la app (heredada de MiLoto):
 }
 
 Reglas de Baloto: 5 números principales (1-43) + 1 superbalota (1-16).
+
+Nota: baloto.com/resultados incluye también sorteos del formato ANTERIOR
+(6 números del 1 al 45, sin superbalota, vigente hasta ~2022). Este scraper
+valida el rango de cada resultado y descarta automáticamente cualquier fila
+que no cumpla el formato actual (5 números 1-43 + superbalota 1-16), así
+que el histórico completo se puede escanear sin riesgo de mezclar formatos.
 """
 
 import json
 import re
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -22,6 +29,7 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://baloto.com/resultados"
+REQUEST_DELAY_SECONDS = 1.0  # pausa entre páginas para no saturar el sitio
 
 MESES = {
     'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
@@ -71,7 +79,9 @@ def get_last_page(first_page_html):
 
 
 def parse_page(html):
-    """Devuelve resultados SOLO de sorteos de BALOTO (ignora Revancha/ColorLoto)."""
+    """Devuelve resultados SOLO de sorteos de BALOTO en formato actual
+    (5 números 1-43 + superbalota 1-16). Descarta Revancha/ColorLoto y
+    cualquier fila del formato anterior (6 números 1-45)."""
     soup = BeautifulSoup(html, 'html.parser')
     results = []
     for row in soup.select('table tr'):
@@ -94,6 +104,7 @@ def parse_page(html):
         principales = sorted(n[:5])
         superbalota = n[5]
 
+        # Filtra automáticamente sorteos del formato anterior (1-45, sin superbalota real)
         if len(principales) == 5 and all(1 <= x <= 43 for x in principales) and 1 <= superbalota <= 16:
             results.append({'fecha': fecha, 'nums': principales, 'sb': superbalota})
 
@@ -111,20 +122,34 @@ def main():
     last_page = get_last_page(first_html)
     print(f'Total de páginas en el sitio: {last_page}')
 
-    # Incremental: solo revisamos las primeras páginas (sorteos recientes),
-    # salvo que no haya datos todavía (primera carga -> recorre todo).
+    # Incremental: si ya hay datos, solo revisamos las primeras páginas
+    # (sorteos recientes). Si data.json está vacío, recorre todo el sitio
+    # (los sorteos del formato antiguo se descartan solos al validar rangos).
     pages_to_scan = last_page if not existing_dates else min(3, last_page)
 
     new_results = []
+    empty_streak = 0
     for page in range(1, pages_to_scan + 1):
         html = first_html if page == 1 else fetch_page(page)
         page_results = parse_page(html)
-        print(f'Página {page}/{pages_to_scan}: {len(page_results)} resultados')
+        print(f'Página {page}/{pages_to_scan}: {len(page_results)} resultados válidos (formato actual)')
+
         for result in page_results:
             if result['fecha'] not in existing_dates:
                 new_results.append(result)
                 existing_dates.add(result['fecha'])
-                print(f"NUEVO: {result['fecha']} -> {result['nums']} SB:{result['sb']}")
+                print(f"  NUEVO: {result['fecha']} -> {result['nums']} SB:{result['sb']}")
+
+        # Si llevamos varias páginas seguidas sin resultados válidos, es
+        # probable que ya entramos al territorio del formato antiguo (1-45);
+        # seguimos igual hasta el final por si hay huecos, solo informamos.
+        empty_streak = empty_streak + 1 if not page_results else 0
+        if empty_streak == 5:
+            print('  (Aviso: 5 páginas seguidas sin sorteos en formato actual, '
+                  'probablemente ya se llegó al histórico del formato anterior 1-45)')
+
+        if page < pages_to_scan:
+            time.sleep(REQUEST_DELAY_SECONDS)
 
     if new_results:
         data['sorteos'].extend(new_results)

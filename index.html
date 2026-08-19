@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Baloto Stats · Sistema Adaptativo</title>
+<title> </title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="favicon-180.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── TOKENS ─────────────────────────────────────────────── */
@@ -61,6 +64,8 @@ button { cursor: pointer; font-family: inherit; }
   flex-wrap: wrap;
   gap: 16px;
 }
+.brand-row { display: flex; align-items: center; gap: 14px; }
+.brand-row img { height: 46px; width: auto; display: block; }
 .header-left h1 {
   font-family: 'JetBrains Mono', monospace;
   font-size: clamp(28px, 6vw, 48px);
@@ -449,7 +454,10 @@ footer {
   <!-- HEADER -->
   <div class="header">
     <div class="header-left">
-      <h1>Baloto <span>Stats</span></h1>
+      <div class="brand-row">
+        <img src="logo.png" alt="Baloto">
+        <h1>Baloto <span>Stats</span></h1>
+      </div>
       <p id="db-subtitle">Cargando datos...</p>
     </div>
     <div class="header-right">

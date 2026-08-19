@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Baloto Stats · Estadísticas</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="favicon-180.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -29,6 +32,8 @@ a:hover{text-decoration:underline;}
 
 /* HEADER */
 .header{padding:28px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.brand-row{display:flex;align-items:center;gap:12px;}
+.brand-row img{height:38px;width:auto;display:block;}
 .header h1{font-family:'JetBrains Mono',monospace;font-size:clamp(20px,4vw,32px);font-weight:700;color:var(--text-1);}
 .header h1 span{color:var(--blue);}
 .back-btn{background:var(--card);border:1px solid var(--border);color:var(--text-2);font-size:13px;padding:8px 14px;border-radius:var(--radius-sm);transition:all .2s;}
@@ -123,7 +128,10 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
 
   <!-- HEADER -->
   <div class="header">
-    <h1>Baloto <span>Stats</span> · Estadísticas</h1>
+    <div class="brand-row">
+      <img src="logo.png" alt="Baloto">
+      <h1>Baloto <span>Stats</span> · Estadísticas</h1>
+    </div>
     <a href="index.html"><button class="back-btn">← Volver al Generador</button></a>
   </div>
 
